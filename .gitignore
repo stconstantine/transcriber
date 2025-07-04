@@ -1,8 +1,20 @@
+# Аудио и расшифровки
 audio/
 transcripts/
+
+# Модели
 models/
 *.pt
-*_env
-__pycache__/
+
+# Виртуальные окружения
 .venv/
+venv/
+*_env
+
+# Кеши и служебные файлы
+__pycache__/
+*.egg-info/
 .DS_Store
+
+# VSCode
+.vscode/
