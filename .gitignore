@@ -1,0 +1,8 @@
+audio/
+transcripts/
+models/
+*.pt
+*_env
+__pycache__/
+.venv/
+.DS_Store
