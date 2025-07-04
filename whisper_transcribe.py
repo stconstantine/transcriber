@@ -2,7 +2,6 @@
 
 import os
 import whisper
-import requests
 from tqdm import tqdm
 import argparse
 from typing import TypedDict, List
@@ -16,36 +15,6 @@ class TranscriptionResult(TypedDict):
     text: str
     segments: List[Segment]
 
-## Загрузка модели
-
-При первом запуске модель Whisper будет автоматически скачана из интернета и сохранена в системный кэш (обычно `~/.cache/whisper`).
-
-Модели различаются по размеру и скорости работы:
-
-| Модель     | Размер   | RAM (примерно) | Качество  |
-|------------|----------|----------------|-----------|
-| tiny       | ~75 MB   | ~1 GB          | низкое    |
-| base       | ~142 MB  | ~1.2 GB        | ниже среднего |
-| small      | ~462 MB  | ~2 GB          | среднее   |
-| medium     | ~1.5 GB  | ~5 GB          | хорошее   |
-| large-v3   | ~2.9 GB  | ~10 GB         | отличное  |
-
-⚠️ Первый запуск с новой моделью может занять несколько минут — файл будет скачан с сервера Hugging Face.
-
-def download_model(model_name: str, dest_folder: str):
-    url = f"https://huggingface.co/openai/whisper/resolve/main/{model_name}.pt"
-    local_path = os.path.join(dest_folder, f"{model_name}.pt")
-    os.makedirs(dest_folder, exist_ok=True)
-
-    print(f"Модель {model_name}.pt не найдена. Скачиваем в {dest_folder}/...")
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        total = int(r.headers.get("content-length", 0))
-        with open(local_path, "wb") as f, tqdm(total=total, unit="B", unit_scale=True, desc=model_name) as pbar:
-            for chunk in r.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-                    pbar.update(len(chunk))
 
 def format_time(seconds: float) -> str:
     m, s = divmod(int(seconds), 60)
@@ -67,12 +36,8 @@ def main():
         print(f"Ошибка: файл не найден: {audio_path}")
         return
 
-    model_path = os.path.join("models", f"{model_name}.pt")
-    if not os.path.isfile(model_path):
-        download_model(model_name, "models")
-
-    print(f"Загружаем модель из: {model_path}")
-    model = whisper.load_model(model_path)
+    print(f"Загружаем модель: {model_name}")
+    model = whisper.load_model(model_name)
 
     # Загружаем аудио для получения длительности
     audio = whisper.load_audio(audio_path)

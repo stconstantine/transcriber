@@ -1,51 +1,64 @@
 # Whisper Transcriber
 
-Скрипт для расшифровки аудио с помощью локальной модели OpenAI Whisper. Работает с `.pt` файлами, сохраняет результат с таймкодами каждые 5 минут.
+Скрипт для расшифровки аудиофайлов с помощью локальной модели OpenAI Whisper.
 
 ## Установка
 
-```bash
-pip install -r requirements.txt
-```
+1. Создайте виртуальное окружение:
+   ```bash
+   python -m venv whisper_env
+   source whisper_env/bin/activate  # macOS/Linux
+   whisper_env\Scripts\activate.bat  # Windows
+   ```
 
-При первом запуске модель Whisper будет автоматически загружена из HuggingFace и сохранена в кэш `~/.cache/whisper`. Если вы хотите скачать модель заранее, используйте флаг `--download-only`.
-
-Возможные имена моделей: `tiny`, `base`, `small`, `medium`, `large-v3`.
-
-| Модель     | Размер файла |
-|------------|--------------|
-| tiny       | ~75 MB       |
-| base       | ~142 MB      |
-| small      | ~466 MB      |
-| medium     | ~1.5 GB      |
-| large-v3   | ~2.9 GB      |
-
-⚠️ Первый запуск может занять время из-за загрузки модели.
-```
-
-## Структура проекта
-
-```
-whisper/
-├── audio/         # входные аудиофайлы
-├── models/        # модели Whisper (.pt)
-├── transcripts/   # расшифрованные тексты
-└── whisper_transcribe.py
-```
+2. Установите зависимости:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Использование
 
+1. Поместите аудиофайл в папку `audio/` (например, `audio/input.wav`).
+2. Запустите скрипт одним из способов:
+
+   ```bash
+   python whisper_transcribe.py
+   ```
+
+   или
+
+   ```bash
+   ./whisper_transcribe.py
+   ```
+
+## Аргументы
+
+Вы можете указать параметры при запуске:
+
 ```bash
-python whisper_transcribe.py [--audio path] [--model name] [--language code]
+python whisper_transcribe.py --audio audio/input.wav --model base --language ru
 ```
 
-Параметры:
-- `--audio` путь к аудиофайлу (по умолчанию: `audio/audio.wav`)
-- `--model` имя модели (tiny, base, medium, large-v3; по умолчанию: `tiny`)
-- `--language` язык (например, ru, en, es; по умолчанию: `ru`)
+- `--audio`: путь к аудиофайлу (по умолчанию `audio/audio.wav`)
+- `--model`: название модели (`tiny`, `base`, `small`, `medium`, `large-v3`)
+- `--language`: язык речи (например, `ru`, `en`, `es`)
+- `--download-only`: скачать модель и выйти
+- `--help`: показать справку
 
-Также доступен флаг `--download-only`, чтобы скачать модель без запуска расшифровки.
+## Результат
 
-## Вывод
+Результат сохраняется в файл `transcripts/<имя_файла>.txt`, разбитый на блоки по 3 минуты.
 
-Результат сохраняется в `transcripts/<имя_аудио>.txt` с таймкодами каждые 3 минуты.
+## Модели
+
+При первом запуске нужная модель автоматически скачивается и сохраняется в кэш `~/.cache/whisper`.
+
+| Модель     | Примерный размер |
+|------------|------------------|
+| tiny       | ~75 MB           |
+| base       | ~142 MB          |
+| small      | ~466 MB          |
+| medium     | ~1.5 GB          |
+| large-v3   | ~2.9 GB          |
+
+Первый запуск с новой моделью может занять несколько минут.
