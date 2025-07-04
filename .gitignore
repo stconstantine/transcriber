@@ -1,6 +1,8 @@
 # Аудио и расшифровки
-audio/
-transcripts/
+audio/*
+!audio/.gitkeep
+transcripts/*
+!transcripts/.gitkeep
 
 # Модели
 models/

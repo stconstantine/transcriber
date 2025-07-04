@@ -1,40 +1,51 @@
-# Whisper Transcription
+# Whisper Transcriber
 
-Скрипт для расшифровки аудиофайлов в текст с помощью OpenAI Whisper. Использует локальные `.pt` модели и сохраняет результат в текст с таймкодами раз в 5 минут.
+Скрипт для расшифровки аудио с помощью локальной модели OpenAI Whisper. Работает с `.pt` файлами, сохраняет результат с таймкодами каждые 5 минут.
 
-## Требования
+## Установка
 
-- Python 3.10+
-- pip install -r requirements.txt
-- Модели `.pt` в папке `models/`
+```bash
+pip install -r requirements.txt
+```
 
-## Структура
+При первом запуске модель Whisper будет автоматически загружена из HuggingFace и сохранена в кэш `~/.cache/whisper`. Если вы хотите скачать модель заранее, используйте флаг `--download-only`.
 
+Возможные имена моделей: `tiny`, `base`, `small`, `medium`, `large-v3`.
+
+| Модель     | Размер файла |
+|------------|--------------|
+| tiny       | ~75 MB       |
+| base       | ~142 MB      |
+| small      | ~466 MB      |
+| medium     | ~1.5 GB      |
+| large-v3   | ~2.9 GB      |
+
+⚠️ Первый запуск может занять время из-за загрузки модели.
+```
+
+## Структура проекта
+
+```
 whisper/
-├── audio/              # аудиофайлы
-├── models/             # whisper модели (.pt)
-├── transcripts/        # результаты (.txt)
-├── whisper_transcribe.py
-└── requirements.txt
+├── audio/         # входные аудиофайлы
+├── models/        # модели Whisper (.pt)
+├── transcripts/   # расшифрованные тексты
+└── whisper_transcribe.py
+```
 
 ## Использование
 
 ```bash
-python whisper_transcribe.py [--audio <путь_к_аудио>] [--model <модель>] [--language <язык>]
+python whisper_transcribe.py [--audio path] [--model name] [--language code]
 ```
 
-Аргументы:
-  --audio     путь к аудиофайлу (по умолчанию: audio/audio.wav)
-  --model     название модели Whisper, например: tiny, base, medium, large-v3 (по умолчанию: tiny)
-  --language  язык распознавания: ru, en, es и др. (по умолчанию: ru)
+Параметры:
+- `--audio` путь к аудиофайлу (по умолчанию: `audio/audio.wav`)
+- `--model` имя модели (tiny, base, medium, large-v3; по умолчанию: `tiny`)
+- `--language` язык (например, ru, en, es; по умолчанию: `ru`)
 
-Примеры:
+Также доступен флаг `--download-only`, чтобы скачать модель без запуска расшифровки.
 
-python whisper_transcribe.py --model large-v3
-python whisper_transcribe.py --audio audio/meeting.wav --model medium --language en
+## Вывод
 
-Результат
-
-Файл с текстом сохраняется в transcripts/<имя_аудио>.txt
-Таймкоды вставляются каждые 5 минут.
-
+Результат сохраняется в `transcripts/<имя_аудио>.txt` с таймкодами каждые 3 минуты.

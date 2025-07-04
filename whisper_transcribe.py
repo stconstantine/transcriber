@@ -1,10 +1,36 @@
+#!/usr/bin/env python
+
 import os
 import whisper
 import requests
 from tqdm import tqdm
-import torch
-import math
 import argparse
+from typing import TypedDict, List
+
+class Segment(TypedDict):
+    start: float
+    end: float
+    text: str
+
+class TranscriptionResult(TypedDict):
+    text: str
+    segments: List[Segment]
+
+## Загрузка модели
+
+При первом запуске модель Whisper будет автоматически скачана из интернета и сохранена в системный кэш (обычно `~/.cache/whisper`).
+
+Модели различаются по размеру и скорости работы:
+
+| Модель     | Размер   | RAM (примерно) | Качество  |
+|------------|----------|----------------|-----------|
+| tiny       | ~75 MB   | ~1 GB          | низкое    |
+| base       | ~142 MB  | ~1.2 GB        | ниже среднего |
+| small      | ~462 MB  | ~2 GB          | среднее   |
+| medium     | ~1.5 GB  | ~5 GB          | хорошее   |
+| large-v3   | ~2.9 GB  | ~10 GB         | отличное  |
+
+⚠️ Первый запуск с новой моделью может занять несколько минут — файл будет скачан с сервера Hugging Face.
 
 def download_model(model_name: str, dest_folder: str):
     url = f"https://huggingface.co/openai/whisper/resolve/main/{model_name}.pt"
@@ -61,14 +87,14 @@ def main():
     # Whisper не дает встроенного коллбека, поэтому будем имитировать прогресс построчно
 
     # Распознаем всю аудио
-    result = model.transcribe(
+    result: TranscriptionResult = model.transcribe(  # type: ignore
         audio_path,
         language=language,
         task="transcribe",
         verbose=False,
         beam_size=5,
         best_of=5,
-        temperature=[0.0]
+        temperature=0.0
     )
 
     progress.update(audio_duration)  # after completion, set progress to the end
@@ -82,14 +108,17 @@ def main():
 
     with open(output_path, "w", encoding="utf-8") as f:
         last_marker = -1
-        for segment in result["segments"]:
-            current_marker = int(segment["start"] // 180)
+        for segment in result.get("segments", []):
+            start = float(segment["start"])
+            end = float(segment["end"])
+            text = str(segment["text"]).strip()
+            current_marker = int(start // 180)
             if current_marker != last_marker:
-                timestamp = format_time(segment["start"])
+                timestamp = format_time(start)
                 f.write(f"\n[{timestamp}]\n")
                 last_marker = current_marker
-            f.write(segment["text"].strip() + " ")
-            print(f"[{format_time(segment['start'])} --> {format_time(segment['end'])}] {segment['text'].strip()}")
+            f.write(text + " ")
+            print(f"[{format_time(start)} --> {format_time(end)}] {text}")
 
     print(f"\nГотово. Результат сохранён в: {output_path}")
 

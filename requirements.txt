@@ -1,4 +1,3 @@
 openai-whisper
 torch
-requests
-tqdm
+numpy
