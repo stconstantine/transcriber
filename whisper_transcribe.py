@@ -5,6 +5,7 @@ import whisper
 from tqdm import tqdm
 import argparse
 from typing import TypedDict, List
+import time
 
 class Segment(TypedDict):
     start: float
@@ -36,7 +37,6 @@ def main():
         print(f"Ошибка: файл не найден: {audio_path}")
         return
 
-    print(f"Загружаем модель: {model_name}")
     model = whisper.load_model(model_name)
 
     # Загружаем аудио для получения длительности
@@ -51,6 +51,7 @@ def main():
     # Здесь создадим коллбек для обновления прогресса вручную
     # Whisper не дает встроенного коллбека, поэтому будем имитировать прогресс построчно
 
+    start_time = time.time()
     # Распознаем всю аудио
     result: TranscriptionResult = model.transcribe(  # type: ignore
         audio_path,
@@ -61,6 +62,8 @@ def main():
         best_of=5,
         temperature=0.0
     )
+    end_time = time.time()
+    processing_time = end_time - start_time
 
     progress.update(audio_duration)  # after completion, set progress to the end
     progress.close()
@@ -75,7 +78,6 @@ def main():
         last_marker = -1
         for segment in result.get("segments", []):
             start = float(segment["start"])
-            end = float(segment["end"])
             text = str(segment["text"]).strip()
             current_marker = int(start // 180)
             if current_marker != last_marker:
@@ -83,9 +85,30 @@ def main():
                 f.write(f"\n[{timestamp}]\n")
                 last_marker = current_marker
             f.write(text + " ")
-            print(f"[{format_time(start)} --> {format_time(end)}] {text}")
+
+    input_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
+    output_size_bytes = os.path.getsize(output_path)
+    output_size_kb = output_size_bytes / 1024
+    output_characters = sum(len(s["text"]) for s in result["segments"])
+    frames_processed = len(audio)
+    audio_seconds = audio_duration
+
+    print("\nСтатистика обработки:")
+    print(f"Входной файл: {audio_path}")
+    print(f"  Размер: {audio_duration:.1f} сек, {input_size_mb:.2f} МБ")
+    print(f"Выходной файл: {output_path}")
+    print(f"  Размер: {output_characters} символов, {output_size_kb:.2f} КБ")
+    print(f"Обработано фреймов: {frames_processed}")
+    print(f"Время обработки: {processing_time:.2f} сек")
+    print(f"Скорость: {frames_processed / processing_time:.1f} фрейм/с, "
+          f"{audio_seconds / processing_time:.2f} сек аудио/с, "
+          f"{output_characters / processing_time:.1f} символов/с")
 
     print(f"\nГотово. Результат сохранён в: {output_path}")
+
+    print(f"Модель: {model_name}")
+    print(f"Параметры модели: {str(model.dims)}")
+    print(f"Язык: {language}")
 
 if __name__ == "__main__":
     main()
